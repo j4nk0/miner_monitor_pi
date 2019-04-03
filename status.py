@@ -182,6 +182,22 @@ class MinerStatus:
         self.hashboards = [ HashboardStatus().decode_xml(i) for i in xml.iterfind(HashboardStatus.HASHBOARD_STATUS_ELEMENT) ]
         return self
 
+class FullStatus:
+    
+    def __init__(self, label=None, miner_status=None, pool_online_statuses=None):
+        self.label = label
+        self.miner_status = miner_status
+        self.pool_online_statues = pool_online_statuses if pool_online_statuses != None else []
+
+    def encode_xml(self):
+        pass
+
+    def decode_xml(self, element):
+        pass
+
+    def encode_html(self):
+        pass
+
 def get_miner_status(ip, password):
     """Connects to miner using given ip_address and password.
     Scrapes needed data and returns Miner_status object.
