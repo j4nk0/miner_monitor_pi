@@ -50,10 +50,10 @@ def run_server(ip, port, queue_list):
             etree.SubElement(table_header, 'th').text = 'Fan1'
             etree.SubElement(table_header, 'th').text = 'Fan2'
             etree.SubElement(table_header, 'th').text = 'Pool hashrate'
-
+            table_datarow = etree.SubElement(table, 'tr')
             for status in last_status:
-                table.insert(len(table), status.encode_html('Slim Shady'))
-            
+                table_datarow.insert(-1, status.encode_html())
+
             response = b'<!DOCTYPE html>' + etree.tostring(content)
             self.request.sendall(response)
 

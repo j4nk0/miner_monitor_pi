@@ -46,7 +46,7 @@ class StatusDB:
     def add(self, status):
         if len(list(self.tree.getroot())) >= self.MAX_RECORDS:
             self.tree.getroot().remove(self.tree.getroot()[0])
-        self.tree.getroot().insert(self.count(), status.encode_xml())
+        self.tree.getroot().insert(-1, status.encode_xml())
 
     def count(self):
         return len(list(self.tree.getroot()))

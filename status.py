@@ -146,10 +146,11 @@ class MinerStatus:
             )
         return string[:-1]
 
-    def encode_html(self, label):
-        """a single table row"""
         html = etree.Element('tr')
-        etree.SubElement(html, 'td').text = label
+
+    def encode_html(self, html):
+        """a part of single table row"""
+        #etree.SubElement(html, 'td').text = self.label
         etree.SubElement(html, 'td').text = self.datetime
         etree.SubElement(html, 'td').text = self.hashrate
         etree.SubElement(html, 'td').text = self.elapsed_time
@@ -183,20 +184,34 @@ class MinerStatus:
         return self
 
 class FullStatus:
+
+    FULL_STATUS_ELEMENT = 'full_status'
+    LABEL_ELEMENT = 'label'
     
     def __init__(self, label=None, miner_status=None, pool_online_statuses=None):
         self.label = label
         self.miner_status = miner_status
-        self.pool_online_statues = pool_online_statuses if pool_online_statuses != None else []
-
-    def encode_xml(self):
-        pass
-
-    def decode_xml(self, element):
-        pass
+        self.pool_online_statutes = pool_online_statuses if pool_online_statuses != None else []
 
     def encode_html(self):
-        pass
+        """single row"""
+        html = etree.Element('tr')
+        etree.SubElement(html, 'td').text = label
+        self.miner_status.ancode_html(html)
+        return htnl
+
+    def encode_xml(self):
+        xml = etree.Element(self.FULL_STATUS_ELEMENT)
+        etree.SubElement(xml, self.LABEL_ELEMENT).text = self.label
+        xml.insert(-1, miner_status.encode_xml())
+        for pool in self.pool_online_statuses:
+            xml.insert(-1, pool.encode_xml())
+
+    def decode_xml(self, xml):
+        self.label = xml.find(self.LABEL_ELEMENT).text
+        self.miner_status = MinerStatus().decode_xml(xml.find(MinerStatus.MINER_STATUS_ELEMENT))
+        # temporary solution:
+        self.pool_online_statuses = [ LiteconPoolStatus().decode_xml(xml.find(LitecoinPoolStatus.LITE_POOL_STATUS_ELEMENT)) ]
 
 def get_miner_status(ip, password):
     """Connects to miner using given ip_address and password.
