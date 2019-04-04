@@ -15,7 +15,6 @@ def run_server(ip, port, queue_list):
                 if len(last_status) == i: last_status.append(queue_list[i].get())   # blocking
                 while not queue_list[i].empty():
                     last_status[i] = queue_list[i].get()
-
             content = etree.Element('html')
             head = etree.SubElement(content, 'head')
             style = etree.SubElement(head, 'style').text = """table {
@@ -40,30 +39,30 @@ def run_server(ip, port, queue_list):
                 }
             """
             body = etree.SubElement(content, 'body')
-            table = etree.SubElement(body, 'table')
-            table_header = etree.SubElement(table, 'tr')
-            etree.SubElement(table_header, 'th').text = 'Label'
-            etree.SubElement(table_header, 'th').text = 'Date Time'
-            etree.SubElement(table_header, 'th').text = 'Hashrate'
-            etree.SubElement(table_header, 'th').text = 'Elapsed time'
-            etree.SubElement(table_header, 'th').text = 'Fan1'
-            etree.SubElement(table_header, 'th').text = 'Fan2'
-            etree.SubElement(table_header, 'th').text = 'Pool url'
-            etree.SubElement(table_header, 'th').text = 'Worker'
-            etree.SubElement(table_header, 'th').text = 'Accepted'
-            etree.SubElement(table_header, 'th').text = 'Rejected'
-            etree.SubElement(table_header, 'th').text = 'Stales'
-            etree.SubElement(table_header, 'th').text = 'Worker'
-            etree.SubElement(table_header, 'th').text = 'Hashrate'
-            etree.SubElement(table_header, 'th').text = 'Coins'
-            etree.SubElement(table_header, 'th').text = 'HW errors'
-            etree.SubElement(table_header, 'th').text = 'PCB temp'
-            etree.SubElement(table_header, 'th').text = 'Chip temp'
-            etree.SubElement(table_header, 'th').text = 'Chip status'
-            #etree.SubElement(table_header, 'th').text = 'Pool hashrate'
-            table_datarow = etree.SubElement(table, 'tr')
+
             for status in last_status:
-                table_datarow.insert(-1, status.get_html())
+                table = etree.SubElement(body, 'table')
+                table_header = etree.SubElement(table, 'tr')
+                etree.SubElement(table_header, 'th').text = 'Label'
+                etree.SubElement(table_header, 'th').text = 'Date Time'
+                etree.SubElement(table_header, 'th').text = 'Hashrate KH/s'
+                etree.SubElement(table_header, 'th').text = 'Elapsed time'
+                etree.SubElement(table_header, 'th').text = 'Fan1 RPM'
+                etree.SubElement(table_header, 'th').text = 'Fan2 RPM'
+                etree.SubElement(table_header, 'th').text = 'Pool url'
+                etree.SubElement(table_header, 'th').text = 'Worker'
+                etree.SubElement(table_header, 'th').text = 'Accepted'
+                etree.SubElement(table_header, 'th').text = 'Rejected'
+                etree.SubElement(table_header, 'th').text = 'Stales'
+                etree.SubElement(table_header, 'th').text = 'Pool Worker'
+                etree.SubElement(table_header, 'th').text = 'Pool Hashrate KH/s'
+                etree.SubElement(table_header, 'th').text = 'Coins'
+                etree.SubElement(table_header, 'th').text = 'HW errors'
+                etree.SubElement(table_header, 'th').text = 'PCB temp C'
+                etree.SubElement(table_header, 'th').text = 'Chip temp C'
+                etree.SubElement(table_header, 'th').text = 'Chip status'
+                for elem in status.get_html_list():
+                    table.insert(len(list(table)), elem)
 
             response = b'<!DOCTYPE html>' + etree.tostring(content)
             self.request.sendall(response)

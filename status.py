@@ -181,42 +181,46 @@ class FullStatus:
         self.miner_status = miner_status
         self.pool_online_statuses = pool_online_statuses if pool_online_statuses != None else []
 
-    def get_html(self):
+    def get_html_list(self):
         """12 rows per miner"""
-        html = etree.Element('tr')          #1
-        etree.SubElement(html, 'td', rowspan='12').text = self.label
+        html = []
+        row1 = etree.Element('tr')          #1
+        html.append(row1)
+        etree.SubElement(row1, 'td', rowspan='12').text = self.label
         # MinerStatus
-        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.datetime
-        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.hashrate
-        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.elapsed_time
-        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.fan1_rpm
-        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.fan2_rpm
+        etree.SubElement(row1, 'td', rowspan='12').text = self.miner_status.datetime
+        etree.SubElement(row1, 'td', rowspan='12').text = self.miner_status.hashrate
+        etree.SubElement(row1, 'td', rowspan='12').text = self.miner_status.elapsed_time
+        etree.SubElement(row1, 'td', rowspan='12').text = self.miner_status.fan1_rpm
+        etree.SubElement(row1, 'td', rowspan='12').text = self.miner_status.fan2_rpm
         # PoolStaus 0
-        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].url
-        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].worker
-        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].accepted
-        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].rejected
-        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].stales
+        etree.SubElement(row1, 'td', rowspan='4').text = self.miner_status.pools[0].url
+        etree.SubElement(row1, 'td', rowspan='4').text = self.miner_status.pools[0].worker
+        etree.SubElement(row1, 'td', rowspan='4').text = self.miner_status.pools[0].accepted
+        etree.SubElement(row1, 'td', rowspan='4').text = self.miner_status.pools[0].rejected
+        etree.SubElement(row1, 'td', rowspan='4').text = self.miner_status.pools[0].stales
         # PoolOnlineStatus 0
-        etree.SubElement(html, 'td', rowspan='4').text = self.pool_online_statuses[0].worker
-        etree.SubElement(html, 'td', rowspan='4').text = self.pool_online_statuses[0].hashrate
-        etree.SubElement(html, 'td', rowspan='4').text = self.pool_online_statuses[0].coins
+        etree.SubElement(row1, 'td', rowspan='4').text = self.pool_online_statuses[0].worker
+        etree.SubElement(row1, 'td', rowspan='4').text = self.pool_online_statuses[0].hashrate
+        etree.SubElement(row1, 'td', rowspan='4').text = self.pool_online_statuses[0].coins
         # HashboardStatus 0
-        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].hw_errors
-        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].temp_pcb
-        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].temp_chip
-        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].chip_status
+        etree.SubElement(row1, 'td', rowspan='3').text = self.miner_status.hashboards[0].hw_errors
+        etree.SubElement(row1, 'td', rowspan='3').text = self.miner_status.hashboards[0].temp_pcb
+        etree.SubElement(row1, 'td', rowspan='3').text = self.miner_status.hashboards[0].temp_chip
+        etree.SubElement(row1, 'td', rowspan='3').text = self.miner_status.hashboards[0].chip_status
 
-        etree.SubElement(html, 'tr')        # 2
-        etree.SubElement(html, 'tr')        # 3
-        row4 = etree.SubElement(html, 'tr') # 4
+        html.append(etree.Element('tr'))      # 2
+        html.append(etree.Element('tr'))        # 3
+        row4 = etree.Element('tr') # 4
+        html.append(row4)
         # HashboardStatus 1
         etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].hw_errors
         etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].temp_pcb
         etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].temp_chip
         etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].chip_status
 
-        row5 = etree.SubElement(html, 'tr') # 5
+        row5 = etree.Element('tr') # 5
+        html.append(row5)
         # PoolStaus 1
         etree.SubElement(row5, 'td', rowspan='4').text = self.miner_status.pools[1].url
         etree.SubElement(row5, 'td', rowspan='4').text = self.miner_status.pools[1].worker
@@ -228,16 +232,18 @@ class FullStatus:
         etree.SubElement(row5, 'td', rowspan='4').text = self.pool_online_statuses[1].hashrate
         etree.SubElement(row5, 'td', rowspan='4').text = self.pool_online_statuses[1].coins
 
-        etree.SubElement(html, 'tr')        # 6
-        row7 = etree.SubElement(html, 'tr') # 7
+        html.append(etree.Element('tr'))        # 6
+        row7 = etree.Element('tr') # 7
+        html.append(row7)
         # HashboardStatus 2
         etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].hw_errors
         etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].temp_pcb
         etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].temp_chip
         etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].chip_status
 
-        etree.SubElement(html, 'tr')        # 8
-        row9 = etree.SubElement(html, 'tr') # 9
+        html.append(etree.Element('tr'))        # 8
+        row9 = etree.Element('tr') # 9
+        html.append(row9)
         # PoolStaus 2
         etree.SubElement(row9, 'td', rowspan='4').text = self.miner_status.pools[2].url
         etree.SubElement(row9, 'td', rowspan='4').text = self.miner_status.pools[2].worker
@@ -249,7 +255,8 @@ class FullStatus:
         etree.SubElement(row9, 'td', rowspan='4').text = self.pool_online_statuses[2].hashrate
         etree.SubElement(row9, 'td', rowspan='4').text = self.pool_online_statuses[2].coins
 
-        row10 = etree.SubElement(html, 'tr') # 10
+        row10 = etree.Element('tr') # 10
+        html.append(row10)
         # HashboardStatus 3
         etree.SubElement(row10, 'td', rowspan='3').text = self.miner_status.hashboards[3].hw_errors
         etree.SubElement(row10, 'td', rowspan='3').text = self.miner_status.hashboards[3].temp_pcb
@@ -269,9 +276,6 @@ class FullStatus:
         self.miner_status = MinerStatus().decode_xml(xml.find(MinerStatus.MINER_STATUS_ELEMENT))
         # temporary solution:
         self.pool_online_statuses = [ LiteconPoolStatus().decode_xml(xml.find(LitecoinPoolStatus.LITE_POOL_STATUS_ELEMENT)) ]
-
-
-
 
 def get_miner_status(ip, password):
     """Connects to miner using given ip_address and password.
