@@ -1,4 +1,4 @@
-from status import get_miner_status, dummy_get_miner_status
+from status import *    #get_miner_status, dummy_get_miner_status
 from view import *
 from threading import Thread as th
 from server import run_server
@@ -72,10 +72,11 @@ def monitor(queue, db, miner_settings):
             miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
             #miner_status = dummy_get_miner_status()
             litecoin_pool_status = get_litecoin_pool_status(miner_status.pools[0].worker, miner_settings['api_key1'])
+            status = FullStatus(miner_settings['label'], miner_status, [litecoin_pool_status])
             db.add(miner_status)
             view = MinerView(miner_status)
             if queue.full(): queue.get()
-            queue.put(miner_status)
+            queue.put(status)
             print(miner_status.datetime, miner_status.hashrate, litecoin_pool_status.hashrate)
             sleep(SCAN_INTERVAL)
         db.write(miner_settings['db_file'])

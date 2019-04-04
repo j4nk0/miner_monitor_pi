@@ -4,7 +4,7 @@ from requests.auth import HTTPDigestAuth # = antminer authentification
 from datetime import datetime
 
 class PoolStatus:
-    """DTO represents 1 pool"""
+    """Represents 1 pool as reported by miner"""
 
     POOL_STATUS_ELEMENT = 'pool_status'
     URL_ELEMENT = 'url'
@@ -34,7 +34,16 @@ class PoolStatus:
         string += 'rejected: ' + str(self.rejected) + '\n'
         string += 'stales: '   + str(self.stales)
         return string
- 
+
+    def encode_html(self, html):
+        """a part of single table row"""
+        etree.SubElement(html, 'td', rowspan='4').text = self.url
+        etree.SubElement(html, 'td', rowspan='4').text = self.worker
+        etree.SubElement(html, 'td', rowspan='4').text = self.accepted
+        etree.SubElement(html, 'td', rowspan='4').text = self.rejected
+        etree.SubElement(html, 'td', rowspan='4').text = self.stales
+        return html
+
     def encode_xml(self):
         """returns XML element object"""
         xml = etree.Element(self.POOL_STATUS_ELEMENT)
@@ -55,7 +64,7 @@ class PoolStatus:
         return self
 
 class HashboardStatus:
-    """DTO represents 1 hashboard"""
+    """Represents 1 hashboard"""
 
     HASHBOARD_STATUS_ELEMENT = 'hashboard_status'
     HW_ERRORS_ELEMENT = 'hw_errors'
@@ -82,6 +91,15 @@ class HashboardStatus:
         string += 'chip_status: ' + str(self.chip_status)
         return string
 
+    def encode_html(self, html):
+        """a part of single table row"""
+        #etree.SubElement(html, 'td').text = self.label
+        etree.SubElement(html, 'td').text = self.hw_errors
+        etree.SubElement(html, 'td').text = self.temp_pcb
+        etree.SubElement(html, 'td').text = self.temp_chip
+        etree.SubElement(html, 'td').text = self.chip_status
+        return html
+
     def encode_xml(self):
         """returns XML element object"""
         xml = etree.Element(self.HASHBOARD_STATUS_ELEMENT)
@@ -100,7 +118,7 @@ class HashboardStatus:
         return self
 
 class MinerStatus:
-    """DTO, describes whole miner at certain time"""
+    """Describes whole miner at certain time"""
 
     MINER_STATUS_ELEMENT = 'miner_status'
     DATETIME_ELEMENT = 'datetime'
@@ -146,16 +164,30 @@ class MinerStatus:
             )
         return string[:-1]
 
-        html = etree.Element('tr')
 
     def encode_html(self, html):
         """a part of single table row"""
-        #etree.SubElement(html, 'td').text = self.label
-        etree.SubElement(html, 'td').text = self.datetime
-        etree.SubElement(html, 'td').text = self.hashrate
-        etree.SubElement(html, 'td').text = self.elapsed_time
-        etree.SubElement(html, 'td').text = self.fan1_rpm
-        etree.SubElement(html, 'td').text = self.fan2_rpm
+        etree.SubElement(html, 'td', rowspan='12').text = self.datetime
+        etree.SubElement(html, 'td', rowspan='12').text = self.hashrate
+        etree.SubElement(html, 'td', rowspan='12').text = self.elapsed_time
+        etree.SubElement(html, 'td', rowspan='12').text = self.fan1_rpm
+        etree.SubElement(html, 'td', rowspan='12').text = self.fan2_rpm
+        self.pools[0].encode_html(html)
+        etree.SubElement(html, 'tr')   # 2
+        etree.SubElement(html, 'tr')   # 3
+        row4 = etree.SubElement(html, 'tr')   # 4
+        row5 = etree.SubElement(html, 'tr')   # 5
+        self.pools[1].encode_html(row5)
+        etree.SubElement(html, 'tr')   # 6
+        row7 = etree.SubElement(html, 'tr')   # 7
+        etree.SubElement(html, 'tr')   # 8
+        row9 = etree.SubElement(html, 'tr')   # 9
+        row10 = etree.SubElement(html, 'tr')   # 10
+        self.pools[2].encode_html(row9)
+        self.hashboards[0].encode_html(html)
+        self.hashboards[1].encode_html(row4)
+        self.hashboards[2].encode_html(row7)
+        self.hashboards[3].encode_html(row10)
         return html
 
     def encode_xml(self):
@@ -191,14 +223,15 @@ class FullStatus:
     def __init__(self, label=None, miner_status=None, pool_online_statuses=None):
         self.label = label
         self.miner_status = miner_status
-        self.pool_online_statutes = pool_online_statuses if pool_online_statuses != None else []
+        self.pool_online_statuses = pool_online_statuses if pool_online_statuses != None else []
 
     def encode_html(self):
         """single row"""
         html = etree.Element('tr')
-        etree.SubElement(html, 'td').text = label
-        self.miner_status.ancode_html(html)
-        return htnl
+        etree.SubElement(html, 'td', rowspan='12').text = self.label
+        self.miner_status.encode_html(html)
+        self.pool_online_statuses[0]    
+        return html
 
     def encode_xml(self):
         xml = etree.Element(self.FULL_STATUS_ELEMENT)
@@ -249,9 +282,9 @@ def get_miner_status(ip, password):
     for i in range(len(miner_status.pools)):
        miner_status.pools[i].url = pools_urls[i]
        miner_status.pools[i].worker = pool_workers[i]
-       miner_status.pools[i].accepted = pool_accepted[i]
-       miner_status.pools[i].rejected = pool_rejected[i]
-       miner_status.pools[i].stales = pool_stales[i]
+       miner_status.pools[i].accepted = ''.join(pool_accepted[i].split(','))
+       miner_status.pools[i].rejected = ''.join(pool_rejected[i].split(','))
+       miner_status.pools[i].stales =   ''.join(pool_stales[i].split(','))
 
     HW_errors = tree.xpath('//div[@id="cbi-table-1-hw"]/text()')
     # data: ['I:0 O:64', 'I:0 O:60', 'I:0 O:61', 'I:0 O:58']
@@ -274,7 +307,7 @@ def dummy_get_miner_status():
     ms = MinerStatus(str(datetime.now()), '501', '2h35m13s', '1500', '1300', [ps, ps, ps],
         [hb, hb, hb, hb])
     return ms
-   
+
 if __name__ == '__main__':
     ps = PoolStatus('url', 'worker', 12, 3, 5)
     hb = HashboardStatus('5', 40, 45, ' oooooooo oooooooo ')
