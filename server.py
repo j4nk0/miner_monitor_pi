@@ -26,7 +26,6 @@ def run_server(ip, port, queue_list):
                   border-collapse: collapse;
                 }
                 th, td {
-                  padding: 15px;
                   text-align: center;
                 }
                 table#t01 tr:nth-child(even) {
@@ -54,6 +53,9 @@ def run_server(ip, port, queue_list):
             etree.SubElement(table_header, 'th').text = 'Accepted'
             etree.SubElement(table_header, 'th').text = 'Rejected'
             etree.SubElement(table_header, 'th').text = 'Stales'
+            etree.SubElement(table_header, 'th').text = 'Worker'
+            etree.SubElement(table_header, 'th').text = 'Hashrate'
+            etree.SubElement(table_header, 'th').text = 'Coins'
             etree.SubElement(table_header, 'th').text = 'HW errors'
             etree.SubElement(table_header, 'th').text = 'PCB temp'
             etree.SubElement(table_header, 'th').text = 'Chip temp'
@@ -61,7 +63,7 @@ def run_server(ip, port, queue_list):
             #etree.SubElement(table_header, 'th').text = 'Pool hashrate'
             table_datarow = etree.SubElement(table, 'tr')
             for status in last_status:
-                table_datarow.insert(-1, status.encode_html())
+                table_datarow.insert(-1, status.get_html())
 
             response = b'<!DOCTYPE html>' + etree.tostring(content)
             self.request.sendall(response)

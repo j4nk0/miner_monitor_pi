@@ -35,15 +35,6 @@ class PoolStatus:
         string += 'stales: '   + str(self.stales)
         return string
 
-    def encode_html(self, html):
-        """a part of single table row"""
-        etree.SubElement(html, 'td', rowspan='4').text = self.url
-        etree.SubElement(html, 'td', rowspan='4').text = self.worker
-        etree.SubElement(html, 'td', rowspan='4').text = self.accepted
-        etree.SubElement(html, 'td', rowspan='4').text = self.rejected
-        etree.SubElement(html, 'td', rowspan='4').text = self.stales
-        return html
-
     def encode_xml(self):
         """returns XML element object"""
         xml = etree.Element(self.POOL_STATUS_ELEMENT)
@@ -90,15 +81,6 @@ class HashboardStatus:
         string += 'temp_chip: '   + str(self.temp_chip) + '\n'
         string += 'chip_status: ' + str(self.chip_status)
         return string
-
-    def encode_html(self, html):
-        """a part of single table row"""
-        #etree.SubElement(html, 'td').text = self.label
-        etree.SubElement(html, 'td').text = self.hw_errors
-        etree.SubElement(html, 'td').text = self.temp_pcb
-        etree.SubElement(html, 'td').text = self.temp_chip
-        etree.SubElement(html, 'td').text = self.chip_status
-        return html
 
     def encode_xml(self):
         """returns XML element object"""
@@ -164,32 +146,6 @@ class MinerStatus:
             )
         return string[:-1]
 
-
-    def encode_html(self, html):
-        """a part of single table row"""
-        etree.SubElement(html, 'td', rowspan='12').text = self.datetime
-        etree.SubElement(html, 'td', rowspan='12').text = self.hashrate
-        etree.SubElement(html, 'td', rowspan='12').text = self.elapsed_time
-        etree.SubElement(html, 'td', rowspan='12').text = self.fan1_rpm
-        etree.SubElement(html, 'td', rowspan='12').text = self.fan2_rpm
-        self.pools[0].encode_html(html)
-        etree.SubElement(html, 'tr')   # 2
-        etree.SubElement(html, 'tr')   # 3
-        row4 = etree.SubElement(html, 'tr')   # 4
-        row5 = etree.SubElement(html, 'tr')   # 5
-        self.pools[1].encode_html(row5)
-        etree.SubElement(html, 'tr')   # 6
-        row7 = etree.SubElement(html, 'tr')   # 7
-        etree.SubElement(html, 'tr')   # 8
-        row9 = etree.SubElement(html, 'tr')   # 9
-        row10 = etree.SubElement(html, 'tr')   # 10
-        self.pools[2].encode_html(row9)
-        self.hashboards[0].encode_html(html)
-        self.hashboards[1].encode_html(row4)
-        self.hashboards[2].encode_html(row7)
-        self.hashboards[3].encode_html(row10)
-        return html
-
     def encode_xml(self):
         """returns XML element object"""
         xml = etree.Element(self.MINER_STATUS_ELEMENT)
@@ -225,12 +181,80 @@ class FullStatus:
         self.miner_status = miner_status
         self.pool_online_statuses = pool_online_statuses if pool_online_statuses != None else []
 
-    def encode_html(self):
-        """single row"""
-        html = etree.Element('tr')
+    def get_html(self):
+        """12 rows per miner"""
+        html = etree.Element('tr')          #1
         etree.SubElement(html, 'td', rowspan='12').text = self.label
-        self.miner_status.encode_html(html)
-        self.pool_online_statuses[0]    
+        # MinerStatus
+        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.datetime
+        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.hashrate
+        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.elapsed_time
+        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.fan1_rpm
+        etree.SubElement(html, 'td', rowspan='12').text = self.miner_status.fan2_rpm
+        # PoolStaus 0
+        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].url
+        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].worker
+        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].accepted
+        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].rejected
+        etree.SubElement(html, 'td', rowspan='4').text = self.miner_status.pools[0].stales
+        # PoolOnlineStatus 0
+        etree.SubElement(html, 'td', rowspan='4').text = self.pool_online_statuses[0].worker
+        etree.SubElement(html, 'td', rowspan='4').text = self.pool_online_statuses[0].hashrate
+        etree.SubElement(html, 'td', rowspan='4').text = self.pool_online_statuses[0].coins
+        # HashboardStatus 0
+        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].hw_errors
+        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].temp_pcb
+        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].temp_chip
+        etree.SubElement(html, 'td', rowspan='3').text = self.miner_status.hashboards[0].chip_status
+
+        etree.SubElement(html, 'tr')        # 2
+        etree.SubElement(html, 'tr')        # 3
+        row4 = etree.SubElement(html, 'tr') # 4
+        # HashboardStatus 1
+        etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].hw_errors
+        etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].temp_pcb
+        etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].temp_chip
+        etree.SubElement(row4, 'td', rowspan='3').text = self.miner_status.hashboards[1].chip_status
+
+        row5 = etree.SubElement(html, 'tr') # 5
+        # PoolStaus 1
+        etree.SubElement(row5, 'td', rowspan='4').text = self.miner_status.pools[1].url
+        etree.SubElement(row5, 'td', rowspan='4').text = self.miner_status.pools[1].worker
+        etree.SubElement(row5, 'td', rowspan='4').text = self.miner_status.pools[1].accepted
+        etree.SubElement(row5, 'td', rowspan='4').text = self.miner_status.pools[1].rejected
+        etree.SubElement(row5, 'td', rowspan='4').text = self.miner_status.pools[1].stales
+        # PoolOnlineStatus 1
+        etree.SubElement(row5, 'td', rowspan='4').text = self.pool_online_statuses[1].worker
+        etree.SubElement(row5, 'td', rowspan='4').text = self.pool_online_statuses[1].hashrate
+        etree.SubElement(row5, 'td', rowspan='4').text = self.pool_online_statuses[1].coins
+
+        etree.SubElement(html, 'tr')        # 6
+        row7 = etree.SubElement(html, 'tr') # 7
+        # HashboardStatus 2
+        etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].hw_errors
+        etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].temp_pcb
+        etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].temp_chip
+        etree.SubElement(row7, 'td', rowspan='3').text = self.miner_status.hashboards[2].chip_status
+
+        etree.SubElement(html, 'tr')        # 8
+        row9 = etree.SubElement(html, 'tr') # 9
+        # PoolStaus 2
+        etree.SubElement(row9, 'td', rowspan='4').text = self.miner_status.pools[2].url
+        etree.SubElement(row9, 'td', rowspan='4').text = self.miner_status.pools[2].worker
+        etree.SubElement(row9, 'td', rowspan='4').text = self.miner_status.pools[2].accepted
+        etree.SubElement(row9, 'td', rowspan='4').text = self.miner_status.pools[2].rejected
+        etree.SubElement(row9, 'td', rowspan='4').text = self.miner_status.pools[2].stales
+        # PoolOnlineStatus 2
+        etree.SubElement(row9, 'td', rowspan='4').text = self.pool_online_statuses[2].worker
+        etree.SubElement(row9, 'td', rowspan='4').text = self.pool_online_statuses[2].hashrate
+        etree.SubElement(row9, 'td', rowspan='4').text = self.pool_online_statuses[2].coins
+
+        row10 = etree.SubElement(html, 'tr') # 10
+        # HashboardStatus 3
+        etree.SubElement(row10, 'td', rowspan='3').text = self.miner_status.hashboards[3].hw_errors
+        etree.SubElement(row10, 'td', rowspan='3').text = self.miner_status.hashboards[3].temp_pcb
+        etree.SubElement(row10, 'td', rowspan='3').text = self.miner_status.hashboards[3].temp_chip
+        etree.SubElement(row10, 'td', rowspan='3').text = self.miner_status.hashboards[3].chip_status
         return html
 
     def encode_xml(self):
@@ -245,6 +269,9 @@ class FullStatus:
         self.miner_status = MinerStatus().decode_xml(xml.find(MinerStatus.MINER_STATUS_ELEMENT))
         # temporary solution:
         self.pool_online_statuses = [ LiteconPoolStatus().decode_xml(xml.find(LitecoinPoolStatus.LITE_POOL_STATUS_ELEMENT)) ]
+
+
+
 
 def get_miner_status(ip, password):
     """Connects to miner using given ip_address and password.
@@ -265,7 +292,7 @@ def get_miner_status(ip, password):
 
     miner_status = MinerStatus()
     miner_status.datetime = str(datetime.now())
-    miner_status.hashrate = str(1000 * float(tree.xpath('//div[@id="ant_ghs5s"]/text()')[0]))
+    miner_status.hashrate = ''.join(tree.xpath('//div[@id="ant_ghs5s"]/text()')[0].split('.'))
     miner_status.elapsed_time = tree.xpath('//div[@id="ant_elapsed"]/text()')[0] # 37m44s
     miner_status.fan1_rpm = ''.join(tree.xpath('//td[@id="ant_fan1"]/text()')[0].split(','))
     miner_status.fan2_rpm = ''.join(tree.xpath('//td[@id="ant_fan2"]/text()')[0].split(','))
