@@ -69,10 +69,11 @@ def monitor(queue, db, miner_settings):
 
     while True:
         for _ in range(PASSES_BEFORE_SAVING):
-            #miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
-            miner_status = dummy_get_miner_status()
+            miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
+            #miner_status = dummy_get_miner_status()
             litecoin_pool_status = get_litecoin_pool_status(miner_status.pools[0].worker, miner_settings['api_key1'])
             db.add(miner_status)
+            print(miner_status.datetime, miner_status.hashrate, litecoin_pool_status.hashrate)
             view = MinerView(miner_status)
             if queue.full(): queue.get()
             queue.put(miner_status)

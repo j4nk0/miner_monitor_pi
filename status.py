@@ -224,29 +224,29 @@ def get_miner_status(ip, password):
 
     # order is important!
     # last value represents number of hardware errors -> is useless
-    pools_urls = self.tree.xpath('//div[@id="cbi-table-1-url"]/text()')
-    pool_workers = self.tree.xpath('//div[@id="cbi-table-1-user"]/text()')
-    pool_accepted = self.tree.xpath('//div[@id="cbi-table-1-accepted"]/text()')
+    pools_urls = tree.xpath('//div[@id="cbi-table-1-url"]/text()')
+    pool_workers = tree.xpath('//div[@id="cbi-table-1-user"]/text()')
+    pool_accepted = tree.xpath('//div[@id="cbi-table-1-accepted"]/text()')
     # fourth value being total 
-    pool_rejected = self.tree.xpath('//div[@id="cbi-table-1-rejected"]/text()')
+    pool_rejected = tree.xpath('//div[@id="cbi-table-1-rejected"]/text()')
     # fourth value being total 
-    pool_stales = self.tree.xpath('//div[@id="cbi-table-1-stale"]/text()')
-    for i in range(len(self.status.pools)):
+    pool_stales = tree.xpath('//div[@id="cbi-table-1-stale"]/text()')
+    for i in range(len(miner_status.pools)):
        miner_status.pools[i].url = pools_urls[i]
        miner_status.pools[i].worker = pool_workers[i]
        miner_status.pools[i].accepted = pool_accepted[i]
        miner_status.pools[i].rejected = pool_rejected[i]
        miner_status.pools[i].stales = pool_stales[i]
 
-    HW_errors = self.tree.xpath('//div[@id="cbi-table-1-hw"]/text()')
+    HW_errors = tree.xpath('//div[@id="cbi-table-1-hw"]/text()')
     # data: ['I:0 O:64', 'I:0 O:60', 'I:0 O:61', 'I:0 O:58']
-    temp_pcb = self.tree.xpath('//div[@id="cbi-table-1-temp"]/text()') 
+    temp_pcb = tree.xpath('//div[@id="cbi-table-1-temp"]/text()') 
     # ['I:0 O:69', 'I:0 O:66', 'I:0 O:67', 'I:0 O:65']
-    temp_chip = self.tree.xpath('//div[@id="cbi-table-1-temp2"]/text()') 
+    temp_chip = tree.xpath('//div[@id="cbi-table-1-temp2"]/text()') 
     # status: ' oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo', 
     # first 3 values being pool statuses (for some odd reason)
-    board_chip_status = self.tree.xpath('//div[@id="cbi-table-1-status"]/text()')
-    for i in range(len(self.status.hashboards)):
+    board_chip_status = tree.xpath('//div[@id="cbi-table-1-status"]/text()')
+    for i in range(len(miner_status.hashboards)):
         miner_status.hashboards[i].hw_errors = HW_errors[i]
         miner_status.hashboards[i].temp_pcb = temp_pcb[i].split(':')[2]  # in deg C
         miner_status.hashboards[i].temp_chip = temp_chip[i].split(':')[2]    # in deg C
