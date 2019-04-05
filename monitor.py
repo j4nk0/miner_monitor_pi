@@ -53,7 +53,7 @@ class StatusDB:
     def get(self, index=None):
         if self.count() == 0: return None
         if index == None: index = self.count() - 1
-        return Miner_status().decode_xml(self.tree.getroot().getchildren()[index])
+        return FullStatus().decode_xml(self.tree.getroot().getchildren()[index])
 
     def read(self, filename):
         self.tree = etree.parse(filename)
@@ -76,9 +76,8 @@ def monitor(queue, db, miner_settings):
             except AttributeError:
                 worker = '-'
             litecoin_pool_status = get_litecoin_pool_status(worker, miner_settings['api_key1'])
-            print(litecoin_pool_status)
             status = FullStatus(miner_settings['label'], miner_status, [litecoin_pool_status] * 3)
-            db.add(miner_status)
+            db.add(status)
             if queue.full(): queue.get()
             queue.put(status)
             sleep(SCAN_INTERVAL)
