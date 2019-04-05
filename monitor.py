@@ -1,5 +1,4 @@
 from status import *
-from view import *
 from threading import Thread as th
 from server import run_server
 from queue import Queue
@@ -69,15 +68,19 @@ def monitor(queue, db, miner_settings):
 
     while True:
         for _ in range(PASSES_BEFORE_SAVING):
-            #miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
-            miner_status = dummy_get_miner_status()
-            litecoin_pool_status = get_litecoin_pool_status(miner_status.pools[0].worker, miner_settings['api_key1'])
+            miner_status = MinerStatus()
+            miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
+            #miner_status = dummy_get_miner_status()
+            try:
+                worker = miner_status.pools[0].worker
+            except AttributeError:
+                worker = '-'
+            litecoin_pool_status = get_litecoin_pool_status(worker, miner_settings['api_key1'])
+            print(litecoin_pool_status)
             status = FullStatus(miner_settings['label'], miner_status, [litecoin_pool_status] * 3)
             db.add(miner_status)
-            view = MinerView(miner_status)
             if queue.full(): queue.get()
             queue.put(status)
-            print(miner_status.datetime, miner_status.hashrate, litecoin_pool_status.hashrate)
             sleep(SCAN_INTERVAL)
         db.write(miner_settings['db_file'])
 

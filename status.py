@@ -2,6 +2,7 @@ from lxml import html, etree
 import requests
 from requests.auth import HTTPDigestAuth # = antminer authentification
 from datetime import datetime
+from litecoin_pool import LitecoinPoolStatus
 
 class PoolStatus:
     """Represents 1 pool as reported by miner"""
@@ -13,7 +14,7 @@ class PoolStatus:
     REJECTED_ELEMENT = 'rejected' 
     STALES_ELEMENT = 'stales'
 
-    def __init__(self, url=None, worker=None, accepted=None, rejected=None, stales=None):
+    def __init__(self, url='-', worker='-', accepted='-', rejected='-', stales='-'):
         self.url = url
         self.worker = worker
         self.accepted = accepted
@@ -34,6 +35,12 @@ class PoolStatus:
         string += 'rejected: ' + str(self.rejected) + '\n'
         string += 'stales: '   + str(self.stales)
         return string
+
+    def rejected_quotient(self):
+        return (int(self.rejected) + int(self.stales)) / int(self.total())
+
+    def rejection_rate_ok(self):
+        return self.rejected_quotient() < 0.1
 
     def encode_xml(self):
         """returns XML element object"""
@@ -63,7 +70,7 @@ class HashboardStatus:
     TEMP_CHIP_ELEMENT = 'temp_chip'
     CHIP_STATUS_ELEMENT = 'chip_status'
 
-    def __init__(self, hw_errors=None, temp_pcb=None, temp_chip=None, chip_status=None):
+    def __init__(self, hw_errors='-', temp_pcb='-', temp_chip='-', chip_status='-'):
         self.hw_errors = hw_errors
         self.temp_pcb = temp_pcb
         self.temp_chip = temp_chip
@@ -82,6 +89,18 @@ class HashboardStatus:
         string += 'chip_status: ' + str(self.chip_status)
         return string
 
+    def max_temp(self):
+        return max(int(self.temp_pcb), int(self.temp_chip))
+
+    def total(self):
+        return int(self.accepted) + int(self.rejected) + int(self.stales)
+
+    def failed_chip_count(self):
+        count = 0
+        for chip in self.chip_status:
+            if chip != 'o' and chip != ' ': count += 1  # o means OK
+        return count
+ 
     def encode_xml(self):
         """returns XML element object"""
         xml = etree.Element(self.HASHBOARD_STATUS_ELEMENT)
@@ -109,8 +128,9 @@ class MinerStatus:
     FAN1_RPM_ELEMENT = 'fan1_rpm'
     FAN2_RPM_ELEMENT = 'fan2_rpm'
 
-    def __init__(self, datetime=None, hashrate=None, elapsed_time=None, fan1_rpm=None,  \
-        fan2_rpm=None, pools=None, hashboards=None):
+    def __init__(self, datetime='-', hashrate='-', elapsed_time='-', fan1_rpm='-',  \
+        fan2_rpm='-', pools=None, hashboards=None):
+
         self.datetime = datetime
         self.hashrate = hashrate
         self.elapsed_time = elapsed_time
@@ -146,6 +166,53 @@ class MinerStatus:
             )
         return string[:-1]
 
+    def elapsed_seconds(self):
+        self.elapsed_time = time_str
+        total_seconds = 0
+        d_idx = time_str.find('d')
+        if d_idx > 0:
+            total_seconds += 60*60*24* int(time_str[:d_idx])
+            time_str = time_str[d_idx + 1:]
+        h_idx = time_str.find('h')
+        if h_idx > 0:
+            total_seconds += 60*60* int(time_str[:h_idx])
+            time_str = time_str[h_idx + 1:]
+        m_idx = time_str.find('m')
+        if m_idx > 0:
+            total_seconds += 60* int(time_str[:m_idx])
+            time_str = time_str[m_idx + 1:]
+        s_idx = time_str.find('s')
+        if s_idx > 0:
+            total_seconds += int(time_str[:s_idx])
+        return total_seconds
+
+    def max_temp(self):
+        temp = 0
+        for h in self.hashboards:
+            if h.max_temp() > temp: temp = h.max_temp()
+        return temp
+
+    def failed_chip_count(self):
+        count = 0
+        for h in self.hashboards:
+            count += h.failed_chip_count()
+        return count
+
+    def boards_ok(self):
+        return self.failed_chip_count() == 0
+
+    def rejected_quotient(self):
+        total = 0
+        failed = 0
+        for p in self.pools:
+            total += p.total()
+            failed += int(p.rejected)
+            failed += int(p.stales)
+        return failed / total
+
+    def rejection_rate_ok(self):
+        return self.rejected_quotient() < 0.1
+
     def encode_xml(self):
         """returns XML element object"""
         xml = etree.Element(self.MINER_STATUS_ELEMENT)
@@ -155,9 +222,15 @@ class MinerStatus:
         etree.SubElement(xml, self.FAN1_RPM_ELEMENT).text = str(self.fan1_rpm)
         etree.SubElement(xml, self.FAN2_RPM_ELEMENT).text = str(self.fan2_rpm)
         for pool in self.pools:
-            xml.insert(-1, pool.encode_xml())
+            try:
+                xml.insert(-1, pool.encode_xml())
+            except AttributeError:
+                xml.insert(-1, PoolStatus().encode_xml())
         for hashboard in self.hashboards:
-            xml.insert(-1, hashboard.encode_xml())
+            try:
+                xml.insert(-1, hashboard.encode_xml())
+            except AttributeError:
+                xml.insert(-1, HashboardStatus().encode_xml())
         return xml
 
     def decode_xml(self, xml):
@@ -176,10 +249,12 @@ class FullStatus:
     FULL_STATUS_ELEMENT = 'full_status'
     LABEL_ELEMENT = 'label'
     
-    def __init__(self, label=None, miner_status=None, pool_online_statuses=None):
+    def __init__(self, label='-', miner_status=None, pool_online_statuses=None):
         self.label = label
-        self.miner_status = miner_status
-        self.pool_online_statuses = pool_online_statuses if pool_online_statuses != None else []
+        if miner_status == None: self.miner_status = MinerStatus()
+        else: self.miner_status = miner_status
+        if pool_online_statuses == None: self.pool_online_statuses = [ LitecoinPoolStatus() for _ in range(3) ]
+        else: self.pool_online_statuses = pool_online_statuses
 
     def encode_xml(self):
         xml = etree.Element(self.FULL_STATUS_ELEMENT)
@@ -206,47 +281,52 @@ def get_miner_status(ip, password):
     MINER_USER = 'root'
     PROTOCOL = 'http://'
 
-    url = PROTOCOL  + ip + STATUS_URL
-    authenification = HTTPDigestAuth(MINER_USER, password)
-    page = requests.get(url, auth=authenification, timeout=10)
-    tree = html.fromstring(page.content)
-
     miner_status = MinerStatus()
-    miner_status.datetime = str(datetime.now())
-    miner_status.hashrate = ''.join(tree.xpath('//div[@id="ant_ghs5s"]/text()')[0].split('.'))
-    miner_status.elapsed_time = tree.xpath('//div[@id="ant_elapsed"]/text()')[0] # 37m44s
-    miner_status.fan1_rpm = ''.join(tree.xpath('//td[@id="ant_fan1"]/text()')[0].split(','))
-    miner_status.fan2_rpm = ''.join(tree.xpath('//td[@id="ant_fan2"]/text()')[0].split(','))
+    try:
+        url = PROTOCOL  + ip + STATUS_URL
+        authenification = HTTPDigestAuth(MINER_USER, password)
+        page = requests.get(url, auth=authenification, timeout=10)
+        tree = html.fromstring(page.content)
 
-    # order is important!
-    # last value represents number of hardware errors -> is useless
-    pools_urls = tree.xpath('//div[@id="cbi-table-1-url"]/text()')
-    pool_workers = tree.xpath('//div[@id="cbi-table-1-user"]/text()')
-    pool_accepted = tree.xpath('//div[@id="cbi-table-1-accepted"]/text()')
-    # fourth value being total 
-    pool_rejected = tree.xpath('//div[@id="cbi-table-1-rejected"]/text()')
-    # fourth value being total 
-    pool_stales = tree.xpath('//div[@id="cbi-table-1-stale"]/text()')
-    for i in range(len(miner_status.pools)):
-       miner_status.pools[i].url = pools_urls[i]
-       miner_status.pools[i].worker = pool_workers[i]
-       miner_status.pools[i].accepted = ''.join(pool_accepted[i].split(','))
-       miner_status.pools[i].rejected = ''.join(pool_rejected[i].split(','))
-       miner_status.pools[i].stales =   ''.join(pool_stales[i].split(','))
+        miner_status.datetime = str(datetime.now())
+        miner_status.hashrate = ''.join(tree.xpath('//div[@id="ant_ghs5s"]/text()')[0].split('.'))
+        miner_status.elapsed_time = tree.xpath('//div[@id="ant_elapsed"]/text()')[0] # 37m44s
+        miner_status.fan1_rpm = ''.join(tree.xpath('//td[@id="ant_fan1"]/text()')[0].split(','))
+        miner_status.fan2_rpm = ''.join(tree.xpath('//td[@id="ant_fan2"]/text()')[0].split(','))
 
-    HW_errors = tree.xpath('//div[@id="cbi-table-1-hw"]/text()')
-    # data: ['I:0 O:64', 'I:0 O:60', 'I:0 O:61', 'I:0 O:58']
-    temp_pcb = tree.xpath('//div[@id="cbi-table-1-temp"]/text()') 
-    # ['I:0 O:69', 'I:0 O:66', 'I:0 O:67', 'I:0 O:65']
-    temp_chip = tree.xpath('//div[@id="cbi-table-1-temp2"]/text()') 
-    # status: ' oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo', 
-    # first 3 values being pool statuses (for some odd reason)
-    board_chip_status = tree.xpath('//div[@id="cbi-table-1-status"]/text()')
-    for i in range(len(miner_status.hashboards)):
-        miner_status.hashboards[i].hw_errors = HW_errors[i]
-        miner_status.hashboards[i].temp_pcb = temp_pcb[i].split(':')[2]  # in deg C
-        miner_status.hashboards[i].temp_chip = temp_chip[i].split(':')[2]    # in deg C
-        miner_status.hashboards[i].chip_status = board_chip_status[i + 3]
+        # order is important!
+        # last value represents number of hardware errors -> is useless
+        pools_urls = tree.xpath('//div[@id="cbi-table-1-url"]/text()')
+        pool_workers = tree.xpath('//div[@id="cbi-table-1-user"]/text()')
+        pool_accepted = tree.xpath('//div[@id="cbi-table-1-accepted"]/text()')
+        # fourth value being total 
+        pool_rejected = tree.xpath('//div[@id="cbi-table-1-rejected"]/text()')
+        # fourth value being total 
+        pool_stales = tree.xpath('//div[@id="cbi-table-1-stale"]/text()')
+        for i in range(len(miner_status.pools)):
+           miner_status.pools[i].url = pools_urls[i]
+           miner_status.pools[i].worker = pool_workers[i]
+           miner_status.pools[i].accepted = ''.join(pool_accepted[i].split(','))
+           miner_status.pools[i].rejected = ''.join(pool_rejected[i].split(','))
+           miner_status.pools[i].stales =   ''.join(pool_stales[i].split(','))
+
+        HW_errors = tree.xpath('//div[@id="cbi-table-1-hw"]/text()')
+        # data: ['I:0 O:64', 'I:0 O:60', 'I:0 O:61', 'I:0 O:58']
+        temp_pcb = tree.xpath('//div[@id="cbi-table-1-temp"]/text()') 
+        # ['I:0 O:69', 'I:0 O:66', 'I:0 O:67', 'I:0 O:65']
+        temp_chip = tree.xpath('//div[@id="cbi-table-1-temp2"]/text()') 
+        # status: ' oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo', 
+        # first 3 values being pool statuses (for some odd reason)
+        board_chip_status = tree.xpath('//div[@id="cbi-table-1-status"]/text()')
+        for i in range(len(miner_status.hashboards)):
+            miner_status.hashboards[i].hw_errors = HW_errors[i]
+            miner_status.hashboards[i].temp_pcb = temp_pcb[i].split(':')[2]  # in deg C
+            miner_status.hashboards[i].temp_chip = temp_chip[i].split(':')[2]    # in deg C
+            miner_status.hashboards[i].chip_status = board_chip_status[i + 3]
+    except AttributeError:
+        pass
+    except IndexError:
+        pass
     return miner_status
 
 def dummy_get_miner_status():

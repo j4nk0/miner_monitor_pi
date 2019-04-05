@@ -8,7 +8,7 @@ class LitecoinPoolStatus:
     HASHRATE_ELEMENT = 'lite_hashtate'
     COINS_ELEMENT = 'lite_coins'
     
-    def __init__(self, worker=None, hashrate=None, coins=None):
+    def __init__(self, worker='-', hashrate='-', coins='-'):
         self.worker = worker
         self.hashrate = hashrate
         self.coins = coins
@@ -41,9 +41,12 @@ def get_litecoin_pool_status(worker, api_key):
 
     page = requests.get(STATUS_URL + api_key)
     tree = html.fromstring(page.content)
-    worker_hashrate = tree.xpath('//td[@id="zosimus.1"]')[0].text.split(' ')[0]
-    total_coins = tree.xpath('//td[@id="user_total_rewards"]')[0].text
-    return LitecoinPoolStatus(worker, worker_hashrate, total_coins)
+    try:
+        worker_hashrate = tree.xpath('//td[@id="zosimus.1"]')[0].text.split(' ')[0]
+        total_coins = tree.xpath('//td[@id="user_total_rewards"]')[0].text
+        return LitecoinPoolStatus(worker, worker_hashrate, total_coins)
+    except IndexError:
+        return LitecoinPoolStatus()
 
 if __name__ == '__main__':
     print(get_litecoin_pool_status('zosimus.1', 'c23d63c025d4b9e901d79e5f955245aa'))

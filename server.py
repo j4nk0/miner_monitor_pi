@@ -1,10 +1,10 @@
 import socketserver as socks
+from status import FullStatus
 from lxml import etree
 
 last_status = []
 
-def complete_table(status, html_body):
-    table = etree.SubElement(html_body, 'table')
+def complete_table(table):
     table_header = etree.SubElement(table, 'tr')
     etree.SubElement(table_header, 'th').text = 'Label'
     etree.SubElement(table_header, 'th').text = 'Date Time'
@@ -24,15 +24,13 @@ def complete_table(status, html_body):
     etree.SubElement(table_header, 'th').text = 'PCB temp C'
     etree.SubElement(table_header, 'th').text = 'Chip temp C'
     etree.SubElement(table_header, 'th').text = 'Chip status'
-    for elem in status.get_html_list():
-        table.insert(len(list(table)), elem)
 
 def get_html_list(status):
     """12 rows per miner"""
     html_list = []
     row1 = etree.Element('tr')          #1
     html_list.append(row1)
-    etree.SubElement(row1, 'td', rowspan='12').text = self.label
+    etree.SubElement(row1, 'td', rowspan='12').text = status.label
     # MinerStatus
     etree.SubElement(row1, 'td', rowspan='12').text = status.miner_status.datetime
     etree.SubElement(row1, 'td', rowspan='12').text = status.miner_status.hashrate
@@ -55,10 +53,10 @@ def get_html_list(status):
     etree.SubElement(row1, 'td', rowspan='3').text = status.miner_status.hashboards[0].temp_chip
     etree.SubElement(row1, 'td', rowspan='3').text = status.miner_status.hashboards[0].chip_status
 
-    html.append(etree.Element('tr'))      # 2
-    html.append(etree.Element('tr'))        # 3
+    html_list.append(etree.Element('tr'))      # 2
+    html_list.append(etree.Element('tr'))        # 3
     row4 = etree.Element('tr') # 4
-    html.append(row4)
+    html_list.append(row4)
     # HashboardStatus 1
     etree.SubElement(row4, 'td', rowspan='3').text = status.miner_status.hashboards[1].hw_errors
     etree.SubElement(row4, 'td', rowspan='3').text = status.miner_status.hashboards[1].temp_pcb
@@ -66,7 +64,7 @@ def get_html_list(status):
     etree.SubElement(row4, 'td', rowspan='3').text = status.miner_status.hashboards[1].chip_status
 
     row5 = etree.Element('tr') # 5
-    html.append(row5)
+    html_list.append(row5)
     # PoolStaus 1
     etree.SubElement(row5, 'td', rowspan='4').text = status.miner_status.pools[1].url
     etree.SubElement(row5, 'td', rowspan='4').text = status.miner_status.pools[1].worker
@@ -78,18 +76,18 @@ def get_html_list(status):
     etree.SubElement(row5, 'td', rowspan='4').text = status.pool_online_statuses[1].hashrate
     etree.SubElement(row5, 'td', rowspan='4').text = status.pool_online_statuses[1].coins
 
-    html.append(etree.Element('tr'))        # 6
+    html_list.append(etree.Element('tr'))        # 6
     row7 = etree.Element('tr') # 7
-    html.append(row7)
+    html_list.append(row7)
     # HashboardStatus 2
     etree.SubElement(row7, 'td', rowspan='3').text = status.miner_status.hashboards[2].hw_errors
     etree.SubElement(row7, 'td', rowspan='3').text = status.miner_status.hashboards[2].temp_pcb
     etree.SubElement(row7, 'td', rowspan='3').text = status.miner_status.hashboards[2].temp_chip
     etree.SubElement(row7, 'td', rowspan='3').text = status.miner_status.hashboards[2].chip_status
 
-    html.append(etree.Element('tr'))        # 8
+    html_list.append(etree.Element('tr'))        # 8
     row9 = etree.Element('tr') # 9
-    html.append(row9)
+    html_list.append(row9)
     # PoolStaus 2
     etree.SubElement(row9, 'td', rowspan='4').text = status.miner_status.pools[2].url
     etree.SubElement(row9, 'td', rowspan='4').text = status.miner_status.pools[2].worker
@@ -102,40 +100,38 @@ def get_html_list(status):
     etree.SubElement(row9, 'td', rowspan='4').text = status.pool_online_statuses[2].coins
 
     row10 = etree.Element('tr') # 10
-    html.append(row10)
+    html_list.append(row10)
     # HashboardStatus 3
     etree.SubElement(row10, 'td', rowspan='3').text = status.miner_status.hashboards[3].hw_errors
     etree.SubElement(row10, 'td', rowspan='3').text = status.miner_status.hashboards[3].temp_pcb
     etree.SubElement(row10, 'td', rowspan='3').text = status.miner_status.hashboards[3].temp_chip
     etree.SubElement(row10, 'td', rowspan='3').text = status.miner_status.hashboards[3].chip_status
-    return html
+    html_list.append(etree.Element('tr'))        # 11
+    html_list.append(etree.Element('tr'))        # 12 
+    html_list.append(etree.Element('tr'))        # 13
+    return html_list
 
-def brief_table(status, html_body):
-    table = etree.SubElement(html_body, 'table')
+def brief_table(table):
     table_header = etree.SubElement(table, 'tr')
     etree.SubElement(table_header, 'th').text = 'Label'
     etree.SubElement(table_header, 'th').text = 'Date Time'
-    etree.SubElement(table_header, 'th').text = 'Hashrate KH/s'
     etree.SubElement(table_header, 'th').text = 'Elapsed time'
-    etree.SubElement(table_header, 'th').text = 'Worker'
+    etree.SubElement(table_header, 'th').text = 'Hashrate KH/s'
+    etree.SubElement(table_header, 'th').text = 'Pool KH/s'
     etree.SubElement(table_header, 'th').text = 'Coins'
     etree.SubElement(table_header, 'th').text = 'Chip temp C'
-    for elem in get_brief_html_list(status):
-        table.insert(len(list(table)), elem)
 
 def get_brief_html_list(status):
     """1 row per miner"""
-    html_list = []
     row1 = etree.Element('tr')          #1
-    html_list.append(row1)
     etree.SubElement(row1, 'td').text = status.label
     etree.SubElement(row1, 'td').text = status.miner_status.datetime
-    etree.SubElement(row1, 'td').text = status.miner_status.hashrate
     etree.SubElement(row1, 'td').text = status.miner_status.elapsed_time
+    etree.SubElement(row1, 'td').text = status.miner_status.hashrate
     etree.SubElement(row1, 'td').text = status.pool_online_statuses[0].hashrate
     etree.SubElement(row1, 'td').text = status.pool_online_statuses[0].coins
     etree.SubElement(row1, 'td').text = status.miner_status.hashboards[0].temp_chip
-    return html_list
+    return row1
 
 def run_server(ip, port, queue_list):
     class ThreadedTCPServer(socks.ThreadingMixIn, socks.TCPServer):
@@ -145,8 +141,10 @@ def run_server(ip, port, queue_list):
 
         def handle(self):
             data = self.request.recv(256)
-            url = data.decode('UTF-8').split(' ')[1]
-
+            try:
+                url = data.decode('UTF-8').split(' ')[1]
+            except IndexError:
+                url = ''
             global last_status
             for i in range(len(queue_list)):
                 if len(last_status) == i: last_status.append(queue_list[i].get())   # blocking
@@ -167,8 +165,16 @@ def run_server(ip, port, queue_list):
                 }
             """
             body = etree.SubElement(content, 'body')
-            #for status in last_status: complete_table(status, body)
-            for status in last_status: brief_table(status, body)
+            table = etree.SubElement(body, 'table')
+            if url == '/detailed':
+                complete_table(table)
+                for status in last_status: 
+                    for elem in get_html_list(status):
+                        table.insert(len(list(table)), elem)
+            else:
+                brief_table(table)
+                for status in last_status:
+                    table.insert(len(list(table)), get_brief_html_list(status))
             response = b'<!DOCTYPE html>' + etree.tostring(content)
             self.request.sendall(response)
 
