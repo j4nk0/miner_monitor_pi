@@ -70,12 +70,12 @@ def monitor(queue, db, miner_settings):
 
     while True:
         for _ in range(PASSES_BEFORE_SAVING):
+            # get status from miner
             try:
                 miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
             except:
                 miner_status = MinerStatus()
-            #miner_status = dummy_get_miner_status()
-            # get online statuses:
+            # get online statuses from pools:
             online_list = [ SomeOnlineStatus() for _ in range(3) ]
             for i in range(3):
                 if LitecoinpoolOnlineStatus.IN_URL in miner_status.pools[i].url: 
@@ -84,10 +84,13 @@ def monitor(queue, db, miner_settings):
                         miner_settings['api_key' + str(i + 1)]
                     )
             status = FullStatus(miner_settings['label'], miner_status, online_list)
+            # Record statuses
             db.add(status)
+            # Send last status to server:
             if queue.full(): queue.get()
             queue.put(status)
             sleep(SCAN_INTERVAL)
+        # Record statuses
         db.write(miner_settings['db_file'])
 
 try:
@@ -97,6 +100,7 @@ except IndexError:
     config_filename = 'miner_monitor.conf'  # Default
 
 global_settings = get_config(config_filename)
+
 queue_list = []
 
 for miner in global_settings['miners']:

@@ -333,13 +333,6 @@ def get_miner_status(ip, password):
         pass
     return miner_status
 
-def dummy_get_miner_status():
-    ps = PoolStatus('url', 'worker', '12', '3', '5')
-    hb = HashboardStatus('5', '40', '45', ' oooooooo oooooooo ')
-    ms = MinerStatus(str(datetime.now()), '501', '2h35m13s', '1500', '1300', [ps, ps, ps],
-        [hb, hb, hb, hb])
-    return ms
-
 if __name__ == '__main__':
     ps = PoolStatus('url', 'worker', 12, 3, 5)
     hb = HashboardStatus('5', 40, 45, ' oooooooo oooooooo ')
