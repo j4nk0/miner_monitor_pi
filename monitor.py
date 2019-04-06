@@ -1,12 +1,13 @@
-from status import *
-from threading import Thread as th
-from server import run_server
-from queue import Queue
-from os.path import isfile
 from sys import argv
+from status import *
 from time import sleep
 from lxml import etree
-from litecoin_pool import get_litecoin_pool_status
+from queue import Queue
+from os.path import isfile
+from online_status import *
+from server import run_server
+#from restart_pi import restart
+from threading import Thread as th
 from configparser import ConfigParser
 
 def get_config(filename):
@@ -61,6 +62,7 @@ class StatusDB:
     def write(self, filename):
         self.tree.write(filename)
 
+    
 def monitor(queue, db, miner_settings):
 
     SCAN_INTERVAL = 5 #30  # seconds
@@ -68,15 +70,20 @@ def monitor(queue, db, miner_settings):
 
     while True:
         for _ in range(PASSES_BEFORE_SAVING):
-            miner_status = MinerStatus()
-            miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
-            #miner_status = dummy_get_miner_status()
             try:
-                worker = miner_status.pools[0].worker
-            except AttributeError:
-                worker = '-'
-            litecoin_pool_status = get_litecoin_pool_status(worker, miner_settings['api_key1'])
-            status = FullStatus(miner_settings['label'], miner_status, [litecoin_pool_status] * 3)
+                miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
+            except:
+                miner_status = MinerStatus()
+            #miner_status = dummy_get_miner_status()
+            # get online statuses:
+            online_list = [ SomeOnlineStatus() for _ in range(3) ]
+            for i in range(3):
+                if LitecoinpoolOnlineStatus.IN_URL in miner_status.pools[i].url: 
+                    online_list[i] = get_litecoinpool_online_status(
+                        miner_status.pools[i].worker,
+                        miner_settings['api_key' + str(i + 1)]
+                    )
+            status = FullStatus(miner_settings['label'], miner_status, online_list)
             db.add(status)
             if queue.full(): queue.get()
             queue.put(status)

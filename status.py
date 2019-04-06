@@ -1,8 +1,8 @@
-from lxml import html, etree
 import requests
-from requests.auth import HTTPDigestAuth # = antminer authentification
+from online_status import *
+from lxml import html, etree
 from datetime import datetime
-from litecoin_pool import LitecoinPoolStatus
+from requests.auth import HTTPDigestAuth # = antminer authentification
 
 class PoolStatus:
     """Represents 1 pool as reported by miner"""
@@ -253,8 +253,10 @@ class FullStatus:
         self.label = label
         if miner_status == None: self.miner_status = MinerStatus()
         else: self.miner_status = miner_status
-        if pool_online_statuses == None: self.pool_online_statuses = [ LitecoinPoolStatus() for _ in range(3) ]
-        else: self.pool_online_statuses = pool_online_statuses
+        if pool_online_statuses == None: self.pool_online_statuses = [ SomeOnlineStatus() for _ in range(3) ]
+        self.pool_online_statuses = pool_online_statuses
+        while len(self.pool_online_statuses) < 3:
+            self.pool_online_statuses.append(SomeOnlineStatus())
 
     def encode_xml(self):
         xml = etree.Element(self.FULL_STATUS_ELEMENT)
