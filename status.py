@@ -259,15 +259,17 @@ class FullStatus:
     def encode_xml(self):
         xml = etree.Element(self.FULL_STATUS_ELEMENT)
         etree.SubElement(xml, self.LABEL_ELEMENT).text = self.label
-        xml.insert(-1, miner_status.encode_xml())
+        xml.insert(-1, self.miner_status.encode_xml())
         for pool in self.pool_online_statuses:
             xml.insert(-1, pool.encode_xml())
+        return xml
 
     def decode_xml(self, xml):
         self.label = xml.find(self.LABEL_ELEMENT).text
         self.miner_status = MinerStatus().decode_xml(xml.find(MinerStatus.MINER_STATUS_ELEMENT))
         # temporary solution:
         self.pool_online_statuses = [ LiteconPoolStatus().decode_xml(xml.find(LitecoinPoolStatus.LITE_POOL_STATUS_ELEMENT)) ]
+        return self
 
 def get_miner_status(ip, password):
     """Connects to miner using given ip_address and password.

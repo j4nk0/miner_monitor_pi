@@ -43,6 +43,7 @@ class StatusDB:
         else: self.tree = etree.ElementTree(etree.Element(self.STATUS_LOG_ELEMENT))
 
     def add(self, status):
+        print(status)
         if len(list(self.tree.getroot())) >= self.MAX_RECORDS:
             self.tree.getroot().remove(self.tree.getroot()[0])
         self.tree.getroot().insert(-1, status.encode_xml())
@@ -77,6 +78,7 @@ def monitor(queue, db, miner_settings):
                 worker = '-'
             litecoin_pool_status = get_litecoin_pool_status(worker, miner_settings['api_key1'])
             status = FullStatus(miner_settings['label'], miner_status, [litecoin_pool_status] * 3)
+            print(status)
             db.add(status)
             if queue.full(): queue.get()
             queue.put(status)
