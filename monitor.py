@@ -6,7 +6,7 @@ from queue import Queue
 from os.path import isfile
 from online_status import *
 from server import run_server
-#from restart_pi import restart
+from restart_pi import restart
 from threading import Thread as th
 from configparser import ConfigParser
 
@@ -15,8 +15,8 @@ def get_config(filename):
     config.read(filename)
     global_settings = { 'miners' : {} }
     if 'MAIN' in config.sections():
-        global_settings['server_ip'] = config.get('server_ip', '127.0.0.1')
-        global_settings['server_port'] = config.getint('server_port', 80)
+        global_settings['server_ip'] = config['MAIN'].get('server_ip', '127.0.0.1')
+        global_settings['server_port'] = config['MAIN'].getint('server_port', 80)
     else:
         global_settings['server_ip'] = '127.0.0.1'
         global_settings['server_port'] = 80
@@ -37,7 +37,7 @@ def get_config(filename):
 class StatusDB:
 
     STATUS_LOG_ELEMENT = 'status_log'
-    MAX_RECORDS = 1000
+    MAX_RECORDS = 200000
 
     def __init__(self, other=None):
         if other != None: self.tree = other.tree
@@ -65,18 +65,18 @@ class StatusDB:
     
 def monitor(queue, db, miner_settings):
 
-    SCAN_INTERVAL = 5 #30  # seconds
-    PASSES_BEFORE_SAVING = 1 #20   # amounts to cca 10 minutes
+    SCAN_INTERVAL = 30  # seconds
+    PASSES_BEFORE_SAVING = 20   # amounts to cca 10 minutes
 
     while True:
         for _ in range(PASSES_BEFORE_SAVING):
             # get status from miner
             try:
                 miner_status = get_miner_status(miner_settings['ip'], miner_settings['password'])
+                # check if miner is ok:
+                if not miner_status.boards_ok(): restart(miner_settings['gpio'])
             except:
                 miner_status = MinerStatus()
-            # check if miner is ok:
-            #if not miner_status.boards_ok(): restart(miner_settings['gpio'])
             # get online statuses from pools:
             online_list = [ SomeOnlineStatus() for _ in range(3) ]
             for i in range(3):
