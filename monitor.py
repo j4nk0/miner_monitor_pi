@@ -6,7 +6,7 @@ from queue import Queue
 from os.path import isfile
 from online_status import *
 from server import run_server
-from restart_pi import restart
+#from restart_pi import restart
 from threading import Thread as th
 from configparser import ConfigParser
 
@@ -76,7 +76,7 @@ def monitor(queue, db, miner_settings):
             except:
                 miner_status = MinerStatus()
             # check if miner is ok:
-            if not miner_status.boards_ok(): restart(miner_settings['gpio']
+            #if not miner_status.boards_ok(): restart(miner_settings['gpio'])
             # get online statuses from pools:
             online_list = [ SomeOnlineStatus() for _ in range(3) ]
             for i in range(3):

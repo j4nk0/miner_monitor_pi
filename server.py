@@ -108,7 +108,7 @@ def get_html_list(status):
     etree.SubElement(row10, 'td', rowspan='3').text = status.miner_status.hashboards[3].chip_status
     html_list.append(etree.Element('tr'))        # 11
     html_list.append(etree.Element('tr'))        # 12 
-    html_list.append(etree.Element('tr'))        # 13
+    #html_list.append(etree.Element('tr'))        # 13
     return html_list
 
 def brief_table(table):
@@ -121,7 +121,7 @@ def brief_table(table):
     etree.SubElement(table_header, 'th').text = 'Coins'
     etree.SubElement(table_header, 'th').text = 'Chip temp C'
 
-def get_brief_html_list(status):
+def get_brief_html(status):
     """1 row per miner"""
     row1 = etree.Element('tr')          #1
     etree.SubElement(row1, 'td').text = status.label
@@ -140,11 +140,6 @@ def run_server(ip, port, queue_list):
     class RequestHandler(socks.BaseRequestHandler):
 
         def handle(self):
-            data = self.request.recv(256)
-            try:
-                url = data.decode('UTF-8').split(' ')[1]
-            except IndexError:
-                url = ''
             global last_status
             for i in range(len(queue_list)):
                 if len(last_status) == i: last_status.append(queue_list[i].get())   # blocking
@@ -163,18 +158,45 @@ def run_server(ip, port, queue_list):
                   background-color: black;
                   color: white;
                 }
+                a:link, a:visited {
+                  background-color: black;
+                  color: white;
+                  padding: 15px 25px;
+                  text-align: center;
+                  text-decoration: none;
+                  display: inline-block;
+                }
             """
+            script = etree.SubElement(head, 'script').text = """
+            function reload() {
+              location.reload();
+            }
+            """
+            title = etree.SubElement(head, 'title').text = 'Miners'
+            data = self.request.recv(256)
+            try:
+                url = data.decode('UTF-8').split(' ')[1]
+            except IndexError:
+                url = ''
             body = etree.SubElement(content, 'body')
-            table = etree.SubElement(body, 'table')
+            button_refresh = etree.SubElement(body, 'button', {'onclick': 'reload()'}).text = 'Refresh'
             if url == '/detailed':
+                button_brief = etree.SubElement(body, 'button', {
+                    'onclick': 'window.location.href="/"'
+                }).text = 'Brief'
+                table = etree.SubElement(body, 'table')
                 complete_table(table)
                 for status in last_status: 
                     for elem in get_html_list(status):
                         table.insert(len(list(table)), elem)
             else:
+                button_detailed = etree.SubElement(body, 'button', {
+                    'onclick': 'window.location.href="/detailed"'
+                }).text = 'Detailed'
+                table = etree.SubElement(body, 'table')
                 brief_table(table)
                 for status in last_status:
-                    table.insert(len(list(table)), get_brief_html_list(status))
+                    table.insert(len(list(table)), get_brief_html(status))
             response = b'<!DOCTYPE html>' + etree.tostring(content)
             self.request.sendall(response)
 

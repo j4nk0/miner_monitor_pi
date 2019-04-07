@@ -1,4 +1,4 @@
-import RPi.GPIO as G
+#import RPi.GPIO as G
 from time import sleep
 
 def restart(gpio_nr):
