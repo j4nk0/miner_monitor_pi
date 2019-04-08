@@ -1,4 +1,4 @@
-### Miner monitor pi
+# Miner monitor pi
 
 
 * L3+ miner monitor
@@ -17,7 +17,7 @@ Tested with raspberry pi 2B.
 
 See and edit included miner_monitor.conf file for configuration.
 
-# Run the monitor
+## Run the monitor
 
 With default miner_monitor.conf:
 
