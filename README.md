@@ -12,7 +12,7 @@
 
 Uses python 3. Made to run on Raspberry pi.
 Uses GPIO to restart miner in case of reporting faulty chip.
-In case of failure temporarily raises the conresponding GPIO high to swith off miners power supply. Also checks hashrate repoorted by litecoinpool.org.
+In case of failure temporarily raises the conresponding GPIO high to swith off miner's power supply. Also checks hashrate reported by litecoinpool.org.
 Tested with raspberry pi 2B.
 
 See and edit included miner_monitor.conf file for configuration.
