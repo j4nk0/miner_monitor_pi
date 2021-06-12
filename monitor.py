@@ -2,7 +2,6 @@ from os.path import isfile
 from time import sleep
 from sys import argv
 from configparser import ConfigParser
-from online_status import get_litecoinpool_online_status
 import requests
 from datetime import datetime as dt
 import json
@@ -36,11 +35,11 @@ def get_litecoinpool_online_status():
     return ONLINE_STATUS
 
 
-
 def restart(gpio_nr):
     G.output(gpio_nr, G.HIGH)
     sleep(120)
     G.output(gpio_nr, G.LOW)
+
 
 SCAN_INTERVAL = 30  # seconds
 G.setmode(G.BOARD)
