@@ -1,21 +1,12 @@
-from status import *
-from lxml import etree
-from queue import Queue
-from online_status import *
-from server import run_server
-from restart_pi import restart
-from threading import Thread as th
-
-# ++++++++++++++++++++++++ OLD ^^^ +++++++++++++++++++++++++++
 from os.path import isfile
 from time import sleep
 from sys import argv
 from configparser import ConfigParser
 from online_status import get_litecoinpool_online_status
-
 import requests
 from datetime import datetime as dt
 import json
+import RPi.GPIO as G
 
 def get_config(filename):
     config = ConfigParser()
@@ -45,8 +36,14 @@ def get_litecoinpool_online_status():
     return ONLINE_STATUS
 
 
-    
+
+def restart(gpio_nr):
+    G.output(gpio_nr, G.HIGH)
+    sleep(120)
+    G.output(gpio_nr, G.LOW)
+
 SCAN_INTERVAL = 30  # seconds
+G.setmode(G.BOARD)
 
 try:
     config_filename = argv[1]
@@ -56,13 +53,15 @@ except IndexError:
 
 
 global_settings = get_config(config_filename)
+for miner in global_settings:
+    G.setup(miner[gpio], G.OUT, initial=G.LOW)
 
 while True:
     online_status = get_litecoinpool_online_status()
     for miner in global_settings['miners']:
         hashrate = online_status[miner['worker']]
         if hashrate < 450:
-            
+            restart(miner['gpio'])
     sleep(SCAN_INTERVAL)
 
 
