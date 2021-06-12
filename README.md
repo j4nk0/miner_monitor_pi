@@ -4,10 +4,7 @@
 * L3+ miner monitor
 * Configured by config file
 * Multiple miners supported
-* Checks miner status
 * Check hashrate on pool
-* Logs history to xml
-* Display status on simple web page
 * Automatically restart miners
 
 Uses python 3. Made to run on Raspberry pi.
