@@ -71,8 +71,3 @@ def get_litecoinpool_online_status(worker, api_key):
     except IndexError:
         return LitecoinpoolOnlineStatus()
 
-if __name__ == '__main__':
-    print(get_litecoin_pool_status('zosimus.1', 'c23d63c025d4b9e901d79e5f955245aa'))
-    lst = LitecoinPoolStatus('someName', '140050', '0.00000042')
-    lst2 = LitecoinPoolStatus().decode_xml(lst.encode_xml())
-    assert str(lst) == str(lst2)
